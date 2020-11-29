@@ -11,6 +11,6 @@ python:
 install: pip install -U Click>=7.0 PyYAML
 
 # Command to run tests, e.g. python setup.py test
-script: python tests/test_conda_env_export.py
+script: python -m unittest tests/test_conda_env_export.py
 
 

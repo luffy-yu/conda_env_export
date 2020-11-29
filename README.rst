@@ -26,7 +26,11 @@ Export conda env with pip to an yml file.
 Features
 --------
 
-* TODO
+* Export conda env dependencies and pip requirements to an yml file.
+
+* Easy to use
+
+* Remove duplicated packages automatically
 
 Credits
 -------
