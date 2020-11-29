@@ -137,7 +137,7 @@ class CondaEnvExport(object):
         assert self.env_prefix, click.secho('Failed', fg='red')
         click.secho(self.env_prefix, fg='green')
 
-        click.secho('Checking python python......', fg='white')
+        click.secho('Checking python......', fg='white')
         self.python_path = self.get_current_python(name)
         assert self.python_path, click.secho('Failed', fg='red')
         click.secho(self.python_path, fg='green')
