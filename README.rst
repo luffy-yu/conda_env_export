@@ -32,6 +32,8 @@ Features
 
 * Remove duplicated packages automatically
 
+.. include:: docs/usage.rst
+
 Credits
 -------
 

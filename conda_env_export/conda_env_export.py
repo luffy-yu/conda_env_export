@@ -1,10 +1,22 @@
 """Main module."""
 import os
+import sys
 from collections import OrderedDict
+from itertools import chain
 from subprocess import Popen, PIPE
 
 import click
 import yaml
+
+try:
+    from pip._internal.utils.misc import get_installed_distributions
+    from pip._internal.operations.freeze import FrozenRequirement
+except ImportError:
+    from pip import get_installed_distributions, FrozenRequirement
+
+from importlib import import_module
+
+flatten = chain.from_iterable
 
 
 def _dict_representer(dumper, data):
@@ -13,21 +25,48 @@ def _dict_representer(dumper, data):
         data.items())
 
 
-class MyDumper(yaml.Dumper):
+class CustomDumper(yaml.Dumper):
 
     def increase_indent(self, flow=False, indentless=False):
-        return super(MyDumper, self).increase_indent(flow, False)
+        return super(CustomDumper, self).increase_indent(flow, False)
 
 
-MyDumper.add_representer(OrderedDict, _dict_representer)
+CustomDumper.add_representer(OrderedDict, _dict_representer)
+
+
+class Node(object):
+
+    def __init__(self, key, version):
+        self.key = key
+        self.version = version
+
+    def __hash__(self):
+        return hash(str(self))
+
+
+class CondaNode(Node):
+
+    def __init__(self, key, version, channel):
+        super(CondaNode, self).__init__(key, version)
+        self.channel = channel
+
+    def __str__(self):
+        return '='.join(filter(lambda x: x, [self.key, self.version]))
+
+
+class PipNode(Node):
+
+    def __init__(self, key, version, project_name=None):
+        super(PipNode, self).__init__(key, version)
+        self.project_name = project_name
+
+    def __str__(self):
+        return '=='.join([self.project_name, self.version])
 
 
 class CondaEnvExport(object):
 
     def __init__(self):
-        self.conda_path = None
-        self.env_prefix = None
-        self.python_path = None
         self.name = 'conda-env-export'
 
     def call_cmd(self, cmd, extra_args):
@@ -39,19 +78,10 @@ class CondaEnvExport(object):
             raise Exception("could not invoke %r\n", cmd_list)
         return p.communicate()
 
-    def drop_duplicates(self, conda_deps, pip_deps):
-        # remove duplicates between conda and pip
-        conda_deps = list(
-            map(lambda x: x.split('=')[0].replace('_', '-').upper(), filter(lambda x: isinstance(x, str), conda_deps)))
-        pip_deps = {x.split('==')[0].replace('_', '-').upper(): x for x in pip_deps}
-        diff_keys = set(pip_deps.keys()).difference(conda_deps)
-        pip_deps = list(map(lambda x: pip_deps[x], diff_keys))
-        return pip_deps
-
     def get_env_name(self):
         return os.getenv('CONDA_DEFAULT_ENV')
 
-    def get_current_python(self, name=None):
+    def get_python_path(self, name=None):
         if name:
             prefix = self.get_conda_prefix(name)
             cmd = os.path.join(prefix, 'bin/python')
@@ -62,36 +92,6 @@ class CondaEnvExport(object):
     def get_current_conda(self):
         return os.getenv('CONDA_EXE')
 
-    def remove_self(self, pip_deps):
-        name = self.name
-        pip_deps = list(filter(lambda x: not x.startswith(name), pip_deps))
-        return pip_deps
-
-    def merge_data(self, conda_data, pip_data):
-        dep_key = 'dependencies'
-        conda_dict = OrderedDict(yaml.load(conda_data, Loader=yaml.FullLoader))
-        deps = conda_dict[dep_key]
-        # find pip dict
-        pip_dicts = list(filter(lambda x: isinstance(x, dict) and 'pip' in x, deps))
-        pip_data = pip_data.strip().split('\n')
-        if pip_dicts:
-            pip_dict = list(pip_dicts[0].values())[0]
-            pip_deps = set(pip_dict).union(pip_data)
-        else:
-            pip_deps = pip_data
-        pip_deps = self.drop_duplicates(deps, pip_deps)
-        pip_deps = self.remove_self(pip_deps)
-        # sort
-        pip_deps = sorted(pip_deps, key=lambda x: x[0].lower())
-        # replace in source conda data
-        if isinstance(deps[-1], dict) and 'pip' in deps[-1]:
-            deps[-1]['pip'] = pip_deps
-        else:
-            deps.append(dict(pip=pip_deps))
-
-        conda_dict[dep_key] = deps
-        return conda_dict
-
     def locate_prefix(self, name):
         cmd = self.get_current_conda()
         args = ['env', 'list']
@@ -99,7 +99,7 @@ class CondaEnvExport(object):
         data = stdout.decode()
         data = list(filter(lambda x: x.startswith(name), data.split('\n')))
         if data:
-            prefix = data[0][len(name):].strip()
+            prefix = data[0][len(name):].strip().replace('*', '').strip()
         else:
             prefix = None
         return prefix
@@ -111,56 +111,128 @@ class CondaEnvExport(object):
             prefix = os.getenv('CONDA_PREFIX')
         return prefix
 
-    def pip_list(self, name=None):
-        cmd = self.python_path or self.get_current_python(name)
-        args = ['-m', 'pip', 'list', '--format=freeze']
+    def get_pip_paths(self, name, conda_prefix):
+        cmd = self.get_python_path(name)
+        args = ['-c', "import sys;print(';'.join(sys.path))"]
         stdout, stderr = self.call_cmd(cmd, args)
         data = stdout.decode()
-        return data
+        paths = list(map(lambda x: x.strip(), data.split(';')))
+        # filter by env prefix
+        paths = list(filter(lambda x: x.startswith(conda_prefix), paths))
+        return paths
 
-    def conda_export(self, name=None):
-        cmd = self.conda_path or self.get_current_conda()
-        env = name or self.get_env_name()
-        args = ['env', 'export', '-n', env, '--no-builds']
+    def get_pip_deps(self, paths, all=False):
+        def guess_version(key):
+            default = None
+            try:
+                m = import_module(key)
+            except ImportError:
+                return default
+            else:
+                return getattr(m, '__version__', default)
+
+        pkgs = get_installed_distributions(paths=paths)
+        nodes = {}
+        for pkg in pkgs:
+            key = pkg.key
+            version = pkg.version
+            deps = pkg.requires()
+            children = {}
+            for dep in deps:
+                k = dep.key
+                # version
+                specs = dep.specs
+                specs = sorted(specs, reverse=True)
+                v = ','.join([''.join(sp) for sp in specs]) if specs else None
+                v = v if v else guess_version(k)
+                children[k] = v
+            node = PipNode(key, version, project_name=pkg.project_name)
+            nodes[node] = children
+        if not all:
+            branch_keys = set(r for r in flatten(nodes.values()))
+            nodes = [p for p in nodes if p.key not in branch_keys]
+        nodes = sorted(nodes, key=lambda x: x.project_name.lower())
+        return nodes
+
+    def get_conda_deps(self, prefix, all=False):
+        base_sp_path = self.get_base_sp_path()
+        sys.path.insert(0, base_sp_path)
+        import conda.exports
+        cache = conda.exports.linked_data(prefix=prefix)
+        nodes = {}
+        for k in cache.keys():
+            n = cache[k]['name']
+            v = cache[k]['version']
+            c = cache[k]['schannel']
+            deps = cache[k]['depends']
+            children = {}
+            for dep in deps:
+                n2 = dep.split(' ')[0]
+                v2 = dep.split(' ')[1:]
+                children[n2] = v2
+            node = CondaNode(n, v, c)
+            nodes[node] = children
+        if not all:
+            branch_keys = set(r for r in flatten(nodes.values()))
+            nodes = [p for p in nodes if p.key not in branch_keys or p.key.lower() == 'python']
+        nodes = sorted(nodes, key=lambda x: x.key.lower())
+        return nodes
+
+    def make_yml(self, conda_nodes, pip_nodes, prefix, name, remove_duplicates=True):
+        if remove_duplicates:
+            # remove duplicates between conda and pip
+            conda_keys = set(map(lambda x: x.key, conda_nodes))
+            pip_nodes = [n for n in pip_nodes if n.project_name not in conda_keys]
+
+        func = lambda x: [str(n) for n in x]
+        conda_deps = func(conda_nodes)
+        pip_deps = func(pip_nodes)
+
+        dict = OrderedDict()
+        dict['name'] = name
+        dict['channels'] = sorted(set(map(lambda x: x.channel, conda_nodes)))
+
+        deps = conda_deps + [{'pip': pip_deps}]
+        dict['dependencies'] = deps
+        dict['prefix'] = prefix
+        return dict
+
+    def get_base_sp_path(self):
+        cmd = self.get_python_path('base')
+        args = ['-c', "import os;print(os.path.dirname(os.__file__))"]
         stdout, stderr = self.call_cmd(cmd, args)
-        data = stdout.decode()
+        data = os.path.join(stdout.decode().strip(), 'site-packages')
         return data
 
-    def check_and_run(self, name=None):
-        click.secho('Checking conda......', fg='white')
-        self.conda_path = self.get_current_conda()
-        assert self.conda_path, click.secho('Failed', fg='red')
-        click.secho(self.conda_path, fg='green')
+    def check(self, name=None):
 
-        click.secho('Checking env prefix......', fg='white')
-        self.env_prefix = self.get_conda_prefix(name)
-        assert self.env_prefix, click.secho('Failed', fg='red')
-        click.secho(self.env_prefix, fg='green')
+        def _check(name, func, *args):
+            click.secho('Checking %s......' % name, fg='white')
+            path = func(*args)
+            assert path, click.secho('Failed', fg='red')
+            click.secho(path, fg='green')
 
-        click.secho('Checking python......', fg='white')
-        self.python_path = self.get_current_python(name)
-        assert self.python_path, click.secho('Failed', fg='red')
-        click.secho(self.python_path, fg='green')
+        _check('conda', self.get_current_conda)
+        _check('conda prefix', self.get_conda_prefix, name)
+        _check('conda base site-packages', self.get_base_sp_path)
+        _check('python', self.get_python_path, name)
+
+    def run(self, name=None, conda_all=False, pip_all=False, remove_duplicates=True):
 
         click.secho('Exporting......', fg='white')
         try:
-            filename = self.run(name)
+            name = name or self.get_env_name()
+            conda_prefix = self.get_conda_prefix(name)
+            conda_nodes = self.get_conda_deps(conda_prefix, all=conda_all)
+            pip_paths = self.get_pip_paths(name, conda_prefix)
+            pip_nodes = self.get_pip_deps(pip_paths, all=pip_all)
+            data = self.make_yml(conda_nodes, pip_nodes, conda_prefix, name,
+                                 remove_duplicates=remove_duplicates)
+
+            filename = '%s.yml' % name
+            with open(filename, 'w') as f:
+                yaml.dump(data, f, Dumper=CustomDumper)
             click.secho('Done. Saved to ./%s.' % filename, fg='green')
         except:
             import traceback
             click.secho(traceback.format_exc(), fg='red')
-
-    def run(self, name=None):
-        name = name or self.get_env_name()
-        conda_data = self.conda_export(name)
-        pip_data = self.pip_list(name)
-        data = self.merge_data(conda_data, pip_data)
-        filename = '%s.yml' % name
-        with open(filename, 'w') as f:
-            yaml.dump(data, f, Dumper=MyDumper)
-        return filename
-
-
-if __name__ == '__main__':
-    cee = CondaEnvExport()
-    cee.check_and_run(name='base')
