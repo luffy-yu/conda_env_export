@@ -8,11 +8,7 @@ from subprocess import Popen, PIPE
 import click
 import yaml
 
-try:
-    from pip._internal.utils.misc import get_installed_distributions
-    from pip._internal.operations.freeze import FrozenRequirement
-except ImportError:
-    from pip import get_installed_distributions, FrozenRequirement
+from pip._internal.utils.misc import get_installed_distributions
 
 from importlib import import_module
 
