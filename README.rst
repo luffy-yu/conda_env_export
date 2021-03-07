@@ -35,7 +35,6 @@ Features
 
 Usage
 --------
-
 To use Conda Env Export in a project:
 
 .. code-block:: python
@@ -54,6 +53,9 @@ To use Conda Env Export in a terminal:
       --conda-all           Output all conda deps  [default: False]
       --pip-all             Output all pip deps  [default: False]
       --reserve-duplicates  Reserve duplicates  [default: False]
+      --include TEXT            Force to include deps (ignore case)
+      --exclude TEXT            Force to exclude deps (ignore case)
+      --extra-pip-requirements  Output an extra `requirements.txt`  [default: False]
       --help                Show this message and exit.
 
 [RECOMMEND]
@@ -72,6 +74,29 @@ Export a named env, e.g. `py37`, run:
 
     $ conda-env-export -n py37
 
+[RECOMMEND]
+
+Export current activated env and output an EXTRA pip requirements file, just run:
+
+.. code-block:: console
+
+    $ conda-env-export --extra-pip-requirements
+
+WHY: Sometimes it'll fail to install some pip deps when executing `conda env create -f env.yml`,
+so it's much more convenient to install pip deps via `pip install -r requirements.txt` rather than
+`conda env update -f env.yml --prune`.
+
+Export a named env and ensure that output MUST include `pip` and `PyYAML`, run:
+
+.. code-block:: console
+
+    $ conda-env-export -n py37 --include pip --include pyyaml
+
+Export a named env and ensure that output MUST exclude `pip` and `PyYAML`, run:
+
+.. code-block:: console
+
+    $ conda-env-export -n py37 --exclude pip --exclude pyyaml
 
 Export with all conda deps and all pip deps of `py37`
 
