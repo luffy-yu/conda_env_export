@@ -117,7 +117,7 @@ class CondaEnvExport(object):
         paths = list(filter(lambda x: x.startswith(conda_prefix), paths))
         return paths
 
-    def get_pip_deps(self, paths, all=False):
+    def get_pip_deps(self, paths, all=False, include=(), exclude=()):
         def guess_version(key):
             default = None
             try:
@@ -146,11 +146,12 @@ class CondaEnvExport(object):
             nodes[node] = children
         if not all:
             branch_keys = set(r for r in flatten(nodes.values()))
-            nodes = [p for p in nodes if p.key not in branch_keys]
+            nodes = [p for p in nodes if p.key not in branch_keys or p.project_name.lower() in include]
+            nodes = [p for p in nodes if p.project_name.lower() not in exclude]
         nodes = sorted(nodes, key=lambda x: x.project_name.lower())
         return nodes
 
-    def get_conda_deps(self, prefix, all=False):
+    def get_conda_deps(self, prefix, all=False, include=(), exclude=()):
         base_sp_path = self.get_base_sp_path()
         sys.path.insert(0, base_sp_path)
         import conda.exports
@@ -170,7 +171,9 @@ class CondaEnvExport(object):
             nodes[node] = children
         if not all:
             branch_keys = set(r for r in flatten(nodes.values()))
-            nodes = [p for p in nodes if p.key not in branch_keys or p.key.lower() == 'python']
+            nodes = [p for p in nodes if p.key not in branch_keys or p.key.lower() == 'python'
+                     or p.key.lower() in include]
+            nodes = [p for p in nodes if p.key.lower() not in exclude]
         nodes = sorted(nodes, key=lambda x: x.key.lower())
         return nodes
 
@@ -191,7 +194,7 @@ class CondaEnvExport(object):
         deps = conda_deps + [{'pip': pip_deps}]
         dict['dependencies'] = deps
         dict['prefix'] = prefix
-        return dict
+        return dict, pip_deps
 
     def get_base_sp_path(self):
         cmd = self.get_python_path('base')
@@ -213,22 +216,28 @@ class CondaEnvExport(object):
         _check('conda base site-packages', self.get_base_sp_path)
         _check('python', self.get_python_path, name)
 
-    def run(self, name=None, conda_all=False, pip_all=False, remove_duplicates=True):
+    def run(self, name=None, conda_all=False, pip_all=False, remove_duplicates=True,
+            include=(), exclude=(), extra_pip_requirements=False):
 
         click.secho('Exporting......', fg='white')
         try:
             name = name or self.get_env_name()
             conda_prefix = self.get_conda_prefix(name)
-            conda_nodes = self.get_conda_deps(conda_prefix, all=conda_all)
+            conda_nodes = self.get_conda_deps(conda_prefix, all=conda_all, include=include, exclude=exclude)
             pip_paths = self.get_pip_paths(name, conda_prefix)
-            pip_nodes = self.get_pip_deps(pip_paths, all=pip_all)
-            data = self.make_yml(conda_nodes, pip_nodes, conda_prefix, name,
-                                 remove_duplicates=remove_duplicates)
+            pip_nodes = self.get_pip_deps(pip_paths, all=pip_all, include=include, exclude=exclude)
+            data, pip_data = self.make_yml(conda_nodes, pip_nodes, conda_prefix, name,
+                                           remove_duplicates=remove_duplicates)
 
             filename = '%s.yml' % name
             with open(filename, 'w') as f:
                 yaml.dump(data, f, Dumper=CustomDumper)
             click.secho('Done. Saved to ./%s.' % filename, fg='green')
+            if extra_pip_requirements:
+                filename = 'requirements.txt'
+                with open(filename, 'w') as f:
+                    f.write('\n'.join(pip_data))
+                click.secho('Done. Saved an extra ./%s.' % filename, fg='green')
         except:
             import traceback
             click.secho(traceback.format_exc(), fg='red')

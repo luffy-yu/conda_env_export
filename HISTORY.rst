@@ -2,6 +2,13 @@
 History
 =======
 
+0.3.0 (2021-03-07)
+------------------
+
+* Add options: `include` and `exclude`.
+* Add option: `extra-pip-requirements`.
+
+
 0.2.2 (2020-12-19)
 ------------------
 
