@@ -177,7 +177,7 @@ class CondaEnvExport(object):
         nodes = sorted(nodes, key=lambda x: x.key.lower())
         return nodes
 
-    def make_yml(self, conda_nodes, pip_nodes, prefix, name, remove_duplicates=True):
+    def make_yml(self, conda_nodes, pip_nodes, prefix, name, remove_duplicates=True, no_prefix=False):
         if remove_duplicates:
             # remove duplicates between conda and pip
             conda_keys = set(map(lambda x: x.key, conda_nodes))
@@ -193,7 +193,8 @@ class CondaEnvExport(object):
 
         deps = conda_deps + [{'pip': pip_deps}]
         dict['dependencies'] = deps
-        dict['prefix'] = prefix
+        if not no_prefix:
+            dict['prefix'] = prefix
         return dict, pip_deps
 
     def get_base_sp_path(self):
@@ -217,7 +218,7 @@ class CondaEnvExport(object):
         _check('python', self.get_python_path, name)
 
     def run(self, name=None, conda_all=False, pip_all=False, remove_duplicates=True,
-            include=(), exclude=(), extra_pip_requirements=False):
+            include=(), exclude=(), extra_pip_requirements=False, no_prefix=False):
 
         click.secho('Exporting......', fg='white')
         try:
@@ -227,7 +228,7 @@ class CondaEnvExport(object):
             pip_paths = self.get_pip_paths(name, conda_prefix)
             pip_nodes = self.get_pip_deps(pip_paths, all=pip_all, include=include, exclude=exclude)
             data, pip_data = self.make_yml(conda_nodes, pip_nodes, conda_prefix, name,
-                                           remove_duplicates=remove_duplicates)
+                                           remove_duplicates=remove_duplicates, no_prefix=no_prefix)
 
             filename = '%s.yml' % name
             with open(filename, 'w') as f:

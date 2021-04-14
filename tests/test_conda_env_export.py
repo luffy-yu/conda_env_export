@@ -2,7 +2,6 @@
 
 """Tests for `conda_env_export` package."""
 
-
 import unittest
 from click.testing import CliRunner
 

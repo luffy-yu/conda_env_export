@@ -23,6 +23,7 @@ To use Conda Env Export in a terminal:
       --include TEXT            Force to include deps (ignore case)
       --exclude TEXT            Force to exclude deps (ignore case)
       --extra-pip-requirements  Output an extra `requirements.txt`  [default: False]
+      --no-prefix               Remove `prefix` in target yml file  [default: False]
       --help                Show this message and exit.
 
 [RECOMMEND]

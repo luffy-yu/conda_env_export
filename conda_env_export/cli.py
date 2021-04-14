@@ -15,7 +15,8 @@ from conda_env_export.conda_env_export import CondaEnvExport
 @click.option('--exclude', help='Force to exclude deps (ignore case)', multiple=True)
 @click.option('--extra-pip-requirements', help='Output an extra `requirements.txt`', is_flag=True, default=False,
               show_default=True)
-def main(name, conda_all, pip_all, reserve_duplicates, include, exclude, extra_pip_requirements):
+@click.option('--no-prefix', help='Remove `prefix` in target yml file', is_flag=True, default=False, show_default=True)
+def main(name, conda_all, pip_all, reserve_duplicates, include, exclude, extra_pip_requirements, no_prefix):
     try:
         include = set(map(lambda x: x.lower(), include))
         exclude = set(map(lambda x: x.lower(), exclude))
@@ -24,7 +25,7 @@ def main(name, conda_all, pip_all, reserve_duplicates, include, exclude, extra_p
         cee = CondaEnvExport()
         cee.check(name)
         cee.run(name, conda_all=conda_all, pip_all=pip_all, remove_duplicates=not reserve_duplicates,
-                include=include, exclude=exclude, extra_pip_requirements=extra_pip_requirements)
+                include=include, exclude=exclude, extra_pip_requirements=extra_pip_requirements, no_prefix=no_prefix)
     except AssertionError as e:
         pass
     return 0
