@@ -230,7 +230,7 @@ class CondaEnvExport(object):
                 click.secho('Checking package %s......' % package_name, fg='white')
                 matched = _check_package_by_conda_cmd(package_name)
                 if not matched:
-                    click.secho(f'Not found {package_name}, try to install automatically...', fg='yellow')
+                    click.secho('Not found %s, try to install automatically...' % package_name, fg='yellow')
                     # install via conda
                     cmd = self.get_current_conda()
                     install_args = ['install', '-c', 'anaconda', package_name, '-q', '-y']
@@ -238,10 +238,10 @@ class CondaEnvExport(object):
                     # call again
                     matched = _check_package_by_conda_cmd(package_name)
                     assert matched, \
-                        click.secho(f'Failed to install {package_name}, please install it manually')
-                    click.secho(f'Installing {package_name} is done', fg='green')
+                        click.secho('Failed to install %s, please install it manually' % package_name)
+                    click.secho('Installing %s is done' % package_name, fg='green')
                 else:
-                    click.secho(f'Found {package_name}', fg='green')
+                    click.secho('Found %s' % package_name, fg='green')
 
         def check_pip_conda():
             if sys.platform == 'win32':
@@ -249,7 +249,7 @@ class CondaEnvExport(object):
                 click.secho('Checking package %s......' % package_name, fg='white')
                 matched = _check_package_by_conda_cmd(package_name)
                 if not matched:
-                    click.secho(f'Not found {package_name}, try to install automatically...', fg='yellow')
+                    click.secho('Not found %s, try to install automatically...' % package_name, fg='yellow')
                     # install via pip
                     install_cmd = 'pip'
                     install_args = ['install', package_name, '-q']
@@ -257,10 +257,10 @@ class CondaEnvExport(object):
                     # call again
                     matched = _check_package_by_conda_cmd(package_name)
                     assert matched, \
-                        click.secho(f'Failed to install {package_name}, please install it manually')
-                    click.secho(f'Installing {package_name} is done', fg='green')
+                        click.secho('Failed to install %s, please install it manually' % package_name)
+                    click.secho('Installing %s is done' % package_name, fg='green')
                 else:
-                    click.secho(f'Found {package_name}', fg='green')
+                    click.secho('Found %s' % package_name, fg='green')
 
         _check('conda', self.get_current_conda)
         # menuinst is a package managed by conda, it's required in windows
