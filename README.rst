@@ -13,7 +13,8 @@ Conda Env Export
         :target: https://conda-env-export.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-
+.. image:: https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png
+        :target: https://www.buymeacoffee.com/luffyyu
 
 
 Export conda env with pip to ONE yml file.
@@ -25,6 +26,8 @@ Export conda env with pip to ONE yml file.
 
 Features
 --------
+
+* Support Windows, Linux, and Mac
 
 * Export conda env dependencies and pip requirements to ONE yml file.
 

@@ -69,7 +69,7 @@ class CondaEnvExport(object):
         cmd_list = [cmd]
         cmd_list.extend(extra_args)
         try:
-            p = Popen(cmd_list, stdout=PIPE, stderr=PIPE)
+            p = Popen(cmd_list, shell=sys.platform == 'win32', stdout=PIPE, stderr=PIPE)
         except OSError:
             raise Exception("could not invoke %r\n", cmd_list)
         return p.communicate()
@@ -80,7 +80,10 @@ class CondaEnvExport(object):
     def get_python_path(self, name=None):
         if name:
             prefix = self.get_conda_prefix(name)
-            cmd = os.path.join(prefix, 'bin/python')
+            if sys.platform == 'win32':
+                cmd = os.path.join(prefix, 'python')
+            else:
+                cmd = os.path.join(prefix, 'bin/python')
         else:
             cmd = os.getenv('CONDA_PYTHON_EXE')
         return cmd
@@ -152,8 +155,9 @@ class CondaEnvExport(object):
         return nodes
 
     def get_conda_deps(self, prefix, all=False, include=(), exclude=()):
-        base_sp_path = self.get_base_sp_path()
-        sys.path.insert(0, base_sp_path)
+        if sys.platform != 'win32':
+            base_sp_path = self.get_base_sp_path()
+            sys.path.insert(0, base_sp_path)
         import conda.exports
         cache = conda.exports.linked_data(prefix=prefix)
         nodes = {}
@@ -212,7 +216,57 @@ class CondaEnvExport(object):
             assert path, click.secho('Failed', fg='red')
             click.secho(path, fg='green')
 
+        def _check_package_by_conda_cmd(package_name):
+            cmd = self.get_current_conda()
+            args = ['list', '-f', package_name]
+            stdout, stderr = self.call_cmd(cmd, args)
+            output = stdout.decode().split()
+            matched = list(filter(lambda x: x.startswith(package_name), output))
+            return matched and len(matched) > 0
+
+        def check_menuinst():
+            if sys.platform == 'win32':
+                package_name = 'menuinst'
+                click.secho('Checking package %s......' % package_name, fg='white')
+                matched = _check_package_by_conda_cmd(package_name)
+                if not matched:
+                    click.secho(f'Not found {package_name}, try to install automatically...', fg='yellow')
+                    # install via conda
+                    cmd = self.get_current_conda()
+                    install_args = ['install', '-c', 'anaconda', package_name, '-q', '-y']
+                    _, _ = self.call_cmd(cmd, install_args)
+                    # call again
+                    matched = _check_package_by_conda_cmd(package_name)
+                    assert matched, \
+                        click.secho(f'Failed to install {package_name}, please install it manually')
+                    click.secho(f'Installing {package_name} is done', fg='green')
+                else:
+                    click.secho(f'Found {package_name}', fg='green')
+
+        def check_pip_conda():
+            if sys.platform == 'win32':
+                package_name = 'conda'
+                click.secho('Checking package %s......' % package_name, fg='white')
+                matched = _check_package_by_conda_cmd(package_name)
+                if not matched:
+                    click.secho(f'Not found {package_name}, try to install automatically...', fg='yellow')
+                    # install via pip
+                    install_cmd = 'pip'
+                    install_args = ['install', package_name, '-q']
+                    _, _ = self.call_cmd(install_cmd, install_args)
+                    # call again
+                    matched = _check_package_by_conda_cmd(package_name)
+                    assert matched, \
+                        click.secho(f'Failed to install {package_name}, please install it manually')
+                    click.secho(f'Installing {package_name} is done', fg='green')
+                else:
+                    click.secho(f'Found {package_name}', fg='green')
+
         _check('conda', self.get_current_conda)
+        # menuinst is a package managed by conda, it's required in windows
+        check_menuinst()
+        # conda is required in windows
+        check_pip_conda()
         _check('conda prefix', self.get_conda_prefix, name)
         _check('conda base site-packages', self.get_base_sp_path)
         _check('python', self.get_python_path, name)
