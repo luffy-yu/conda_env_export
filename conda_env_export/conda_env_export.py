@@ -125,7 +125,7 @@ class CondaEnvExport(object):
             default = None
             try:
                 m = import_module(key)
-            except ImportError:
+            except:
                 return default
             else:
                 return getattr(m, '__version__', default)
@@ -224,43 +224,39 @@ class CondaEnvExport(object):
             matched = list(filter(lambda x: x.startswith(package_name), output))
             return matched and len(matched) > 0
 
+        def _check_and_try_installing(package_name, install_cmd, install_args):
+            click.secho('Checking package %s......' % package_name, fg='white')
+            matched = _check_package_by_conda_cmd(package_name)
+            if not matched:
+                click.secho('Not found %s, try to install automatically...' % package_name, fg='yellow')
+                _, _ = self.call_cmd(install_cmd, install_args)
+                # check again
+                matched = _check_package_by_conda_cmd(package_name)
+                assert matched, \
+                    click.secho('Failed to install %s, please install it manually' % package_name)
+                click.secho('Installing %s is done' % package_name, fg='green')
+            else:
+                click.secho('Found %s' % package_name, fg='green')
+
         def check_menuinst():
             if sys.platform == 'win32':
                 package_name = 'menuinst'
-                click.secho('Checking package %s......' % package_name, fg='white')
-                matched = _check_package_by_conda_cmd(package_name)
-                if not matched:
-                    click.secho('Not found %s, try to install automatically...' % package_name, fg='yellow')
-                    # install via conda
-                    cmd = self.get_current_conda()
-                    install_args = ['install', '-c', 'anaconda', package_name, '-q', '-y']
-                    _, _ = self.call_cmd(cmd, install_args)
-                    # call again
-                    matched = _check_package_by_conda_cmd(package_name)
-                    assert matched, \
-                        click.secho('Failed to install %s, please install it manually' % package_name)
-                    click.secho('Installing %s is done' % package_name, fg='green')
-                else:
-                    click.secho('Found %s' % package_name, fg='green')
+                install_cmd = self.get_current_conda()
+                install_args = ['install', '-c', 'anaconda', package_name, '-q', '-y']
+                _check_and_try_installing(package_name, install_cmd, install_args)
 
         def check_pip_conda():
             if sys.platform == 'win32':
                 package_name = 'conda'
-                click.secho('Checking package %s......' % package_name, fg='white')
-                matched = _check_package_by_conda_cmd(package_name)
-                if not matched:
-                    click.secho('Not found %s, try to install automatically...' % package_name, fg='yellow')
-                    # install via pip
-                    install_cmd = 'pip'
-                    install_args = ['install', package_name, '-q']
-                    _, _ = self.call_cmd(install_cmd, install_args)
-                    # call again
-                    matched = _check_package_by_conda_cmd(package_name)
-                    assert matched, \
-                        click.secho('Failed to install %s, please install it manually' % package_name)
-                    click.secho('Installing %s is done' % package_name, fg='green')
-                else:
-                    click.secho('Found %s' % package_name, fg='green')
+                install_cmd = 'pip'
+                install_args = ['install', package_name, '-q']
+                _check_and_try_installing(package_name, install_cmd, install_args)
+                # For windows, the new installed conda will conflict with the default conda.
+                # It means that conda command will fail when executing.
+                # To fix this, just to remove the new installed conda locating in {prefix}/Scripts/
+                new_conda_exe_file = os.path.join(self.get_conda_prefix(name), 'Scripts/conda.exe')
+                if os.path.exists(new_conda_exe_file):
+                    os.remove(new_conda_exe_file)
 
         _check('conda', self.get_current_conda)
         # menuinst is a package managed by conda, it's required in windows

@@ -17,7 +17,7 @@ Conda Env Export
         :target: https://www.buymeacoffee.com/luffyyu
 
 
-Export conda env with pip to ONE yml file.
+Export conda env dependencies and pip requirements to ONE yml file.
 
 
 * Free software: MIT license
@@ -27,11 +27,11 @@ Export conda env with pip to ONE yml file.
 Features
 --------
 
-* Support Windows, Linux, and Mac
-
-* Export conda env dependencies and pip requirements to ONE yml file.
-
 * Easy to use
+
+* Flexible options to export
+
+* Support Windows, Linux, and Mac
 
 * Remove duplicated packages automatically
 

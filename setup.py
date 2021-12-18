@@ -11,10 +11,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['pip>=20.0.0,<21.0.0', 'Click>=7.0', 'PyYAML>=5.1']
-
-if sys.platform == "win32":
-    requirements += ['cytoolz>=0.11.0']
+requirements = ['pip>=20.0.0,<21.0.0', 'Click>=7.0', 'cytoolz>=0.11.0', 'PyYAML>=5.1']
 
 setup_requirements = []
 
@@ -54,6 +51,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/luffy-yu/conda_env_export',
-    version='0.4.1',
+    version='0.4.2',
     zip_safe=False,
 )
