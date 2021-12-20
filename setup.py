@@ -34,7 +34,7 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
     ],
-    description="Export conda env with pip to ONE yml file.",
+    description="Export conda env dependencies and pip requirements to ONE yml file.",
     entry_points={
         'console_scripts': [
             'conda-env-export=conda_env_export.cli:main',
@@ -51,6 +51,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/luffy-yu/conda_env_export',
-    version='0.4.2',
+    version='0.4.3',
     zip_safe=False,
 )

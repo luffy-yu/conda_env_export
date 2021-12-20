@@ -65,11 +65,15 @@ class CondaEnvExport(object):
     def __init__(self):
         self.name = 'conda-env-export'
 
+    @property
+    def is_windows(self):
+        return sys.platform == 'win32'
+
     def call_cmd(self, cmd, extra_args):
         cmd_list = [cmd]
         cmd_list.extend(extra_args)
         try:
-            p = Popen(cmd_list, shell=sys.platform == 'win32', stdout=PIPE, stderr=PIPE)
+            p = Popen(cmd_list, shell=self.is_windows, stdout=PIPE, stderr=PIPE)
         except OSError:
             raise Exception("could not invoke %r\n", cmd_list)
         return p.communicate()
@@ -80,7 +84,7 @@ class CondaEnvExport(object):
     def get_python_path(self, name=None):
         if name:
             prefix = self.get_conda_prefix(name)
-            if sys.platform == 'win32':
+            if self.is_windows:
                 cmd = os.path.join(prefix, 'python')
             else:
                 cmd = os.path.join(prefix, 'bin/python')
@@ -120,6 +124,13 @@ class CondaEnvExport(object):
         paths = list(filter(lambda x: x.startswith(conda_prefix), paths))
         return paths
 
+    def get_python_version(self, name):
+        cmd = self.get_python_path(name)
+        args = ['-c', "import sys; print(sys.version[: sys.version.index(' ')])"]
+        stdout, stderr = self.call_cmd(cmd, args)
+        data = stdout.decode().strip()
+        return data
+
     def get_pip_deps(self, paths, all=False, include=(), exclude=()):
         def guess_version(key):
             default = None
@@ -154,13 +165,16 @@ class CondaEnvExport(object):
         nodes = sorted(nodes, key=lambda x: x.project_name.lower())
         return nodes
 
-    def get_conda_deps(self, prefix, all=False, include=(), exclude=()):
-        if sys.platform != 'win32':
+    def get_conda_deps(self, name, prefix, all=False, include=(), exclude=()):
+        if not self.is_windows:
             base_sp_path = self.get_base_sp_path()
             sys.path.insert(0, base_sp_path)
         import conda.exports
         cache = conda.exports.linked_data(prefix=prefix)
         nodes = {}
+        python_str = 'python'
+        # for Windows
+        found_python = False
         for k in cache.keys():
             n = cache[k]['name']
             v = cache[k]['version']
@@ -173,11 +187,21 @@ class CondaEnvExport(object):
                 children[n2] = v2
             node = CondaNode(n, v, c)
             nodes[node] = children
+
+            if not found_python and n.lower() == python_str:
+                found_python = True
+
+        # add python if not exists
+        if not found_python:
+            python_node = CondaNode(python_str, self.get_python_version(name), '')
+            nodes[python_node] = {}
+
         if not all:
             branch_keys = set(r for r in flatten(nodes.values()))
-            nodes = [p for p in nodes if p.key not in branch_keys or p.key.lower() == 'python'
+            nodes = [p for p in nodes if p.key not in branch_keys or p.key.lower() == python_str
                      or p.key.lower() in include]
             nodes = [p for p in nodes if p.key.lower() not in exclude]
+
         nodes = sorted(nodes, key=lambda x: x.key.lower())
         return nodes
 
@@ -193,7 +217,7 @@ class CondaEnvExport(object):
 
         dict = OrderedDict()
         dict['name'] = name
-        dict['channels'] = sorted(set(map(lambda x: x.channel, conda_nodes)))
+        dict['channels'] = sorted(filter(lambda x: len(x), set(map(lambda x: x.channel, conda_nodes))))
 
         deps = conda_deps + [{'pip': pip_deps}]
         dict['dependencies'] = deps
@@ -239,14 +263,14 @@ class CondaEnvExport(object):
                 click.secho('Found %s' % package_name, fg='green')
 
         def check_menuinst():
-            if sys.platform == 'win32':
+            if self.is_windows:
                 package_name = 'menuinst'
                 install_cmd = self.get_current_conda()
                 install_args = ['install', '-c', 'anaconda', package_name, '-q', '-y']
                 _check_and_try_installing(package_name, install_cmd, install_args)
 
         def check_pip_conda():
-            if sys.platform == 'win32':
+            if self.is_windows:
                 package_name = 'conda'
                 install_cmd = 'pip'
                 install_args = ['install', package_name, '-q']
@@ -274,7 +298,7 @@ class CondaEnvExport(object):
         try:
             name = name or self.get_env_name()
             conda_prefix = self.get_conda_prefix(name)
-            conda_nodes = self.get_conda_deps(conda_prefix, all=conda_all, include=include, exclude=exclude)
+            conda_nodes = self.get_conda_deps(name, conda_prefix, all=conda_all, include=include, exclude=exclude)
             pip_paths = self.get_pip_paths(name, conda_prefix)
             pip_nodes = self.get_pip_deps(pip_paths, all=pip_all, include=include, exclude=exclude)
             data, pip_data = self.make_yml(conda_nodes, pip_nodes, conda_prefix, name,
