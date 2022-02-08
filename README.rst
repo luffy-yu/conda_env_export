@@ -6,7 +6,7 @@ Conda Env Export
 .. image:: https://img.shields.io/pypi/v/conda_env_export.svg
         :target: https://pypi.python.org/pypi/conda_env_export
 
-.. image:: https://img.shields.io/travis/luffy-yu/conda_env_export.svg
+.. image:: https://api.travis-ci.com/luffy-yu/conda_env_export.svg?branch=master
         :target: https://travis-ci.com/luffy-yu/conda_env_export
 
 .. image:: https://readthedocs.org/projects/conda-env-export/badge/?version=latest
