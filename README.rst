@@ -7,7 +7,7 @@ Conda Env Export
         :target: https://pypi.python.org/pypi/conda_env_export
 
 .. image:: https://api.travis-ci.com/luffy-yu/conda_env_export.svg?branch=master
-        :target: https://travis-ci.com/luffy-yu/conda_env_export
+        :target: https://app.travis-ci.com/github/luffy-yu/conda_env_export
 
 .. image:: https://readthedocs.org/projects/conda-env-export/badge/?version=latest
         :target: https://conda-env-export.readthedocs.io/en/latest/?badge=latest
