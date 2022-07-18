@@ -161,7 +161,10 @@ class CondaEnvExport(object):
         if not all:
             branch_keys = set(r for r in flatten(nodes.values()))
             nodes = [p for p in nodes if p.key not in branch_keys or p.project_name.lower() in include]
-            nodes = [p for p in nodes if p.project_name.lower() not in exclude]
+
+        # fix issue #2: https://github.com/luffy-yu/conda_env_export/issues/2
+        nodes = [p for p in nodes if p.project_name.lower() not in exclude]
+
         nodes = sorted(nodes, key=lambda x: x.project_name.lower())
         return nodes
 
@@ -200,7 +203,8 @@ class CondaEnvExport(object):
             branch_keys = set(r for r in flatten(nodes.values()))
             nodes = [p for p in nodes if p.key not in branch_keys or p.key.lower() == python_str
                      or p.key.lower() in include]
-            nodes = [p for p in nodes if p.key.lower() not in exclude]
+        # fix issue #2: https://github.com/luffy-yu/conda_env_export/issues/2
+        nodes = [p for p in nodes if p.key.lower() not in exclude]
 
         nodes = sorted(nodes, key=lambda x: x.key.lower())
         return nodes
