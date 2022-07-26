@@ -2,15 +2,13 @@
 import os
 import sys
 from collections import OrderedDict
+from importlib import import_module
 from itertools import chain
 from subprocess import Popen, PIPE
 
 import click
+import pkg_resources
 import yaml
-
-from pip._internal.utils.misc import get_installed_distributions
-
-from importlib import import_module
 
 flatten = chain.from_iterable
 
@@ -141,7 +139,8 @@ class CondaEnvExport(object):
             else:
                 return getattr(m, '__version__', default)
 
-        pkgs = get_installed_distributions(paths=paths)
+        # pkgs = get_installed_distributions(paths=paths)
+        pkgs = pkg_resources.working_set
         nodes = {}
         for pkg in pkgs:
             key = pkg.key
