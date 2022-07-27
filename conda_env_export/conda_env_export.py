@@ -313,7 +313,7 @@ class CondaEnvExport(object):
             if output_file is None:
                 filename = '%s.yml' % name
             else:
-                filename = output_file if output_file.lower().endswith('.yml') else f'{output_file}.yml'
+                filename = output_file if output_file.lower().endswith('.yml') else output_file + '.yml'
 
             if output_folder is not None:
                 filename = os.path.join(output_folder, filename)
