@@ -19,7 +19,7 @@ from conda_env_export.conda_env_export import CondaEnvExport
 @click.option('--to-folder', help='Where to output the file(s)', type=click.Path(exists=True, file_okay=False, dir_okay=True, writable=True),
               default='./', show_default=True)
 @click.option('--to-file', help='Filename of the output yml file', type=click.Path(file_okay=True, dir_okay=False, writable=True),
-              default=os.getenv('CONDA_DEFAULT_ENV') + '.yml', show_default=True)
+              default=os.getenv('CONDA_DEFAULT_ENV') + '.yml' if os.getenv('CONDA_DEFAULT_ENV') else '', show_default=True)
 def main(name, conda_all, pip_all, reserve_duplicates, include, exclude, extra_pip_requirements, no_prefix, to_folder, to_file):
     try:
         include = set(map(lambda x: x.lower(), include))
