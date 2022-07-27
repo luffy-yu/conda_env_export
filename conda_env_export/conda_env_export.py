@@ -2,15 +2,13 @@
 import os
 import sys
 from collections import OrderedDict
+from importlib import import_module
 from itertools import chain
 from subprocess import Popen, PIPE
 
 import click
+import pkg_resources
 import yaml
-
-from pip._internal.utils.misc import get_installed_distributions
-
-from importlib import import_module
 
 flatten = chain.from_iterable
 
@@ -141,7 +139,9 @@ class CondaEnvExport(object):
             else:
                 return getattr(m, '__version__', default)
 
-        pkgs = get_installed_distributions(paths=paths)
+        # Thanks to @https://github.com/ealizadeh-via
+        # Fix: https://github.com/luffy-yu/conda_env_export/issues/3
+        pkgs = pkg_resources.working_set
         nodes = {}
         for pkg in pkgs:
             key = pkg.key
@@ -296,7 +296,8 @@ class CondaEnvExport(object):
         _check('python', self.get_python_path, name)
 
     def run(self, name=None, conda_all=False, pip_all=False, remove_duplicates=True,
-            include=(), exclude=(), extra_pip_requirements=False, no_prefix=False):
+            include=(), exclude=(), extra_pip_requirements=False, no_prefix=False,
+            output_folder=None, output_file=None):
 
         click.secho('Exporting......', fg='white')
         try:
@@ -308,15 +309,28 @@ class CondaEnvExport(object):
             data, pip_data = self.make_yml(conda_nodes, pip_nodes, conda_prefix, name,
                                            remove_duplicates=remove_duplicates, no_prefix=no_prefix)
 
-            filename = '%s.yml' % name
+            # Fix: https://github.com/luffy-yu/conda_env_export/issues/4
+            if output_file is None:
+                filename = '%s.yml' % name
+            else:
+                filename = output_file if output_file.lower().endswith('.yml') else output_file + '.yml'
+
+            if output_folder is not None:
+                filename = os.path.join(output_folder, filename)
+
             with open(filename, 'w') as f:
                 yaml.dump(data, f, Dumper=CustomDumper)
-            click.secho('Done. Saved to ./%s.' % filename, fg='green')
+            click.secho('Done. Saved to %s.' % filename, fg='green')
+
             if extra_pip_requirements:
                 filename = 'requirements.txt'
+
+                if output_folder is not None:
+                    filename = os.path.join(output_folder, filename)
+
                 with open(filename, 'w') as f:
                     f.write('\n'.join(pip_data))
-                click.secho('Done. Saved an extra ./%s.' % filename, fg='green')
+                click.secho('Done. Saved an extra %s.' % filename, fg='green')
         except:
             import traceback
             click.secho(traceback.format_exc(), fg='red')

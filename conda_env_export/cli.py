@@ -16,7 +16,11 @@ from conda_env_export.conda_env_export import CondaEnvExport
 @click.option('--extra-pip-requirements', help='Output an extra `requirements.txt`', is_flag=True, default=False,
               show_default=True)
 @click.option('--no-prefix', help='Remove `prefix` in target yml file', is_flag=True, default=False, show_default=True)
-def main(name, conda_all, pip_all, reserve_duplicates, include, exclude, extra_pip_requirements, no_prefix):
+@click.option('--to-folder', help='Where to output the file(s)', type=click.Path(exists=True, file_okay=False, dir_okay=True, writable=True),
+              default='./', show_default=True)
+@click.option('--to-file', help='Filename of the output yml file', type=click.Path(file_okay=True, dir_okay=False, writable=True),
+              default=os.getenv('CONDA_DEFAULT_ENV') + '.yml' if os.getenv('CONDA_DEFAULT_ENV') else '', show_default=True)
+def main(name, conda_all, pip_all, reserve_duplicates, include, exclude, extra_pip_requirements, no_prefix, to_folder, to_file):
     try:
         include = set(map(lambda x: x.lower(), include))
         exclude = set(map(lambda x: x.lower(), exclude))
@@ -25,7 +29,8 @@ def main(name, conda_all, pip_all, reserve_duplicates, include, exclude, extra_p
         cee = CondaEnvExport()
         cee.check(name)
         cee.run(name, conda_all=conda_all, pip_all=pip_all, remove_duplicates=not reserve_duplicates,
-                include=include, exclude=exclude, extra_pip_requirements=extra_pip_requirements, no_prefix=no_prefix)
+                include=include, exclude=exclude, extra_pip_requirements=extra_pip_requirements, no_prefix=no_prefix,
+                output_folder=to_folder, output_file=to_file)
     except AssertionError as e:
         pass
     return 0
