@@ -16,7 +16,7 @@ from conda_env_export.conda_env_export import CondaEnvExport
 @click.option('--extra-pip-requirements', help='Output an extra `requirements.txt`', is_flag=True, default=False,
               show_default=True)
 @click.option('--no-prefix', help='Remove `prefix` in target yml file', is_flag=True, default=False, show_default=True)
-@click.option('--to-folder', help='Where to output the file(s)', type=click.Path(file_okay=False, dir_okay=True, writable=True),
+@click.option('--to-folder', help='Where to output the file(s)', type=click.Path(exists=True, file_okay=False, dir_okay=True, writable=True),
               default='./', show_default=True)
 @click.option('--to-file', help='Filename of the output yml file', type=click.Path(file_okay=True, dir_okay=False, writable=True),
               default=f"{os.getenv('CONDA_DEFAULT_ENV')}.yml", show_default=True)
