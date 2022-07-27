@@ -2,6 +2,12 @@
 History
 =======
 
+0.4.5 (2022-07-26)
+------------------
+
+* Fix `https://github.com/luffy-yu/conda_env_export/issues/3` and `https://github.com/luffy-yu/conda_env_export/issues/4`
+
+
 0.4.4 (2022-07-18)
 ------------------
 
