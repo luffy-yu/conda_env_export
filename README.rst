@@ -52,15 +52,18 @@ To use Conda Env Export in a terminal:
     Usage: conda-env-export [OPTIONS]
 
     Options:
-      -n, --name TEXT       Name of environment  [default: `{activated}`]
-      --conda-all           Output all conda deps  [default: False]
-      --pip-all             Output all pip deps  [default: False]
-      --reserve-duplicates  Reserve duplicates  [default: False]
+      -n, --name TEXT           Name of environment  [default: `{activated}`]
+      --conda-all               Output all conda deps  [default: False]
+      --pip-all                 Output all pip deps  [default: False]
+      --separate                Output to separate files  [default: False]
+      --reserve-duplicates      Reserve duplicates  [default: False]
       --include TEXT            Force to include deps (ignore case)
       --exclude TEXT            Force to exclude deps (ignore case)
       --extra-pip-requirements  Output an extra `requirements.txt`  [default: False]
       --no-prefix               Remove `prefix` in target yml file  [default: False]
-      --help                Show this message and exit.
+      --to-folder DIRECTORY     Where to output the file(s)  [default: ./]
+      --to-file FILE            Filename of the output yml file  [default: `{activated}`]
+      --help                    Show this message and exit.
 
 [RECOMMEND]
 
@@ -77,6 +80,18 @@ Export a named env, e.g. `py37`, run:
 .. code-block:: console
 
     $ conda-env-export -n py37
+
+[RECOMMEND]
+
+Export current activated env to separate files (`activated.yml` and `requirements.txt`), just run:
+
+.. code-block:: console
+
+    $ conda-env-export --separate
+
+NOTE: `--separate` is different from `--extra-pip-requirements` in the output yml file,
+where the yml from `--separate` doesn't explicitly list pip dependencies.
+It will use `-r requirements.txt` instead.
 
 [RECOMMEND]
 

@@ -209,7 +209,7 @@ class CondaEnvExport(object):
         nodes = sorted(nodes, key=lambda x: x.key.lower())
         return nodes
 
-    def make_yml(self, conda_nodes, pip_nodes, prefix, name, remove_duplicates=True, no_prefix=False):
+    def make_yml(self, conda_nodes, pip_nodes, prefix, name, remove_duplicates=True, no_prefix=False, separate=False):
         if remove_duplicates:
             # remove duplicates between conda and pip
             conda_keys = set(map(lambda x: x.key, conda_nodes))
@@ -222,8 +222,8 @@ class CondaEnvExport(object):
         dict = OrderedDict()
         dict['name'] = name
         dict['channels'] = sorted(filter(lambda x: len(x), set(map(lambda x: x.channel, conda_nodes))))
-
-        deps = conda_deps + [{'pip': pip_deps}]
+        # https://github.com/luffy-yu/conda_env_export/issues/5
+        deps = conda_deps + [{'pip': ['-r requirements.txt'] if separate else pip_deps}]
         dict['dependencies'] = deps
         if not no_prefix:
             dict['prefix'] = prefix
@@ -295,7 +295,7 @@ class CondaEnvExport(object):
         _check('conda base site-packages', self.get_base_sp_path)
         _check('python', self.get_python_path, name)
 
-    def run(self, name=None, conda_all=False, pip_all=False, remove_duplicates=True,
+    def run(self, name=None, conda_all=False, pip_all=False, separate=False, remove_duplicates=True,
             include=(), exclude=(), extra_pip_requirements=False, no_prefix=False,
             output_folder=None, output_file=None):
 
@@ -307,7 +307,7 @@ class CondaEnvExport(object):
             pip_paths = self.get_pip_paths(name, conda_prefix)
             pip_nodes = self.get_pip_deps(pip_paths, all=pip_all, include=include, exclude=exclude)
             data, pip_data = self.make_yml(conda_nodes, pip_nodes, conda_prefix, name,
-                                           remove_duplicates=remove_duplicates, no_prefix=no_prefix)
+                                           remove_duplicates=remove_duplicates, no_prefix=no_prefix, separate=separate)
 
             # Fix: https://github.com/luffy-yu/conda_env_export/issues/4
             if output_file is None:
@@ -322,7 +322,7 @@ class CondaEnvExport(object):
                 yaml.dump(data, f, Dumper=CustomDumper)
             click.secho('Done. Saved to %s.' % filename, fg='green')
 
-            if extra_pip_requirements:
+            if separate or extra_pip_requirements:
                 filename = 'requirements.txt'
 
                 if output_folder is not None:
@@ -330,7 +330,7 @@ class CondaEnvExport(object):
 
                 with open(filename, 'w') as f:
                     f.write('\n'.join(pip_data))
-                click.secho('Done. Saved an extra %s.' % filename, fg='green')
+                click.secho('Done. Saved to %s.' % filename, fg='green')
         except:
             import traceback
             click.secho(traceback.format_exc(), fg='red')
