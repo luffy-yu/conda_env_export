@@ -12,7 +12,9 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 # https://github.com/luffy-yu/conda_env_export/issues/6
-requirements = ['setuptools', 'Click>=7.0', 'cytoolz>=0.11.0', 'PyYAML>=5.1', 'conda==4.3.16']
+# ruamel.yaml>=0.11.14,<0.18 the front comes from conda, and the rear is to fix deprecated load() function.
+requirements = ['setuptools', 'Click>=7.0', 'cytoolz>=0.11.0', 'PyYAML>=5.1', 'ruamel.yaml>=0.11.14,<0.18',
+                'conda']
 
 setup_requirements = []
 
@@ -34,6 +36,7 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
     ],
     description="Export conda env dependencies and pip requirements to ONE yml file.",
     entry_points={
@@ -42,6 +45,9 @@ setup(
         ],
     },
     install_requires=requirements,
+    dependency_links=[
+            'https://github.com/luffy-yu/conda-4.3.16/releases/download/v4.3.16.1/conda-4.3.16.tar.gz#egg=conda'
+    ],
     license="MIT license",
     long_description=readme + '\n\n' + history,
     include_package_data=True,
@@ -52,6 +58,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/luffy-yu/conda_env_export',
-    version='0.5.0',
+    version='0.5.1',
     zip_safe=False,
 )
