@@ -25,7 +25,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
-      run: pip install -U Click>=7.0 PyYAML 'pip>=20.0.0,<21.0.0' --force-reinstall
+      run: pip install --trusted-host pypi.python.org -U Click>=7.0 PyYAML 'pip>=20.0.0,<21.0.0' --force-reinstall
 
     - name: Run tests
       run: python -m unittest tests/test_conda_env_export.py
