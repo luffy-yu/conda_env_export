@@ -267,7 +267,9 @@ class CondaEnvExport(object):
                 click.secho('Found %s' % package_name, fg='green')
 
         def check_menuinst():
-            if self.is_windows:
+            # menuinst dependency is remove after 0.6.1 using the customized conda https://github.com/luffy-yu/conda-4.3.16/releases/tag/v4.3.16.2
+            from . import __version__
+            if self.is_windows and __version__ < '0.6.1':
                 package_name = 'menuinst'
                 install_cmd = self.get_current_conda()
                 install_args = ['install', '-c', 'anaconda', package_name, '-q', '-y']

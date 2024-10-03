@@ -46,7 +46,7 @@ setup(
     },
     install_requires=requirements,
     dependency_links=[
-            'https://github.com/luffy-yu/conda-4.3.16/releases/download/v4.3.16.1/conda-4.3.16.tar.gz#egg=conda'
+            'https://github.com/luffy-yu/conda-4.3.16/releases/download/v4.3.16.2/conda-4.3.16.2.tar.gz#egg=conda'
     ],
     license="MIT license",
     long_description=readme + '\n\n' + history,
@@ -58,6 +58,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/luffy-yu/conda_env_export',
-    version='0.6.0',
+    version='0.6.1',
     zip_safe=False,
 )
