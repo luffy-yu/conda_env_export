@@ -15,7 +15,9 @@ with open('HISTORY.rst') as history_file:
 # ruamel.yaml>=0.11.14,<0.18 the front comes from conda, and the rear is to fix deprecated load() function.
 requirements = ['setuptools', 'Click>=7.0', 'cytoolz>=0.11.0', 'PyYAML>=5.1', 'ruamel.yaml>=0.11.14,<0.18',
                 # This works for wheel installation, while dependency_links didn't.
-                'conda @ https://github.com/luffy-yu/conda-4.3.16/releases/download/v4.3.16.2/conda-4.3.16.2.tar.gz#egg=conda==4.3.16.2'
+                # This can not be uploaded to pypi as `Can't have direct dependency`.
+                # Install them via the command, see
+                # 'conda @ https://github.com/luffy-yu/conda-4.3.16/releases/download/v4.3.16.2/conda-4.3.16.2.tar.gz#egg=conda==4.3.16.2'
                 ]
 
 setup_requirements = []
@@ -48,7 +50,7 @@ setup(
     },
     install_requires=requirements,
     dependency_links=[
-            'https://github.com/luffy-yu/conda-4.3.16/releases/download/v4.3.16.2/conda-4.3.16.2.tar.gz#egg=conda==4.3.16.2'
+            # 'https://github.com/luffy-yu/conda-4.3.16/releases/download/v4.3.16.2/conda-4.3.16.2.tar.gz#egg=conda==4.3.16.2'
     ],
     license="MIT license",
     long_description=readme + '\n\n' + history,

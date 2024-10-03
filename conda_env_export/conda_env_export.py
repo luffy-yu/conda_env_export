@@ -277,7 +277,8 @@ class CondaEnvExport(object):
 
         def check_pip_conda():
             if self.is_windows:
-                package_name = 'conda'
+                from . import __conda__
+                package_name = __conda__
                 install_cmd = 'pip'
                 install_args = ['install', package_name, '-q']
                 _check_and_try_installing(package_name, install_cmd, install_args)
