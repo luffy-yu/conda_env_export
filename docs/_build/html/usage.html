@@ -1,0 +1,181 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usage &#8212; Conda Env Export 0.6.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="conda_env_export" href="modules.html" />
+    <link rel="prev" title="Installation" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
+<p>To use Conda Env Export in a project:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">conda_env_export</span>
+</pre></div>
+</div>
+<p>To use Conda Env Export in a terminal:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> conda-env-export --help
+<span class="go">Usage: conda-env-export [OPTIONS]</span>
+
+<span class="go">Options:</span>
+<span class="go">  -n, --name TEXT           Name of environment  [default: `{activated}`]</span>
+<span class="go">  --conda-all               Output all conda deps  [default: False]</span>
+<span class="go">  --pip-all                 Output all pip deps  [default: False]</span>
+<span class="go">  --separate                Output to separate files  [default: False]</span>
+<span class="go">  --reserve-duplicates      Reserve duplicates  [default: False]</span>
+<span class="go">  --include TEXT            Force to include deps (ignore case)</span>
+<span class="go">  --exclude TEXT            Force to exclude deps (ignore case)</span>
+<span class="go">  --extra-pip-requirements  Output an extra `requirements.txt`  [default: False]</span>
+<span class="go">  --no-prefix               Remove `prefix` in target yml file  [default: False]</span>
+<span class="go">  --to-folder DIRECTORY     Where to output the file(s)  [default: ./]</span>
+<span class="go">  --to-file FILE            Filename of the output yml file  [default: `{activated}`]</span>
+<span class="go">  --help                    Show this message and exit.</span>
+</pre></div>
+</div>
+<p>[RECOMMEND]</p>
+<p>Export current activated env, just run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> conda-env-export
+</pre></div>
+</div>
+<p>[RECOMMEND]</p>
+<p>Export a named env, e.g. <cite>py37</cite>, run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> conda-env-export -n py37
+</pre></div>
+</div>
+<p>[RECOMMEND]</p>
+<p>Export current activated env to separate files (<cite>activated.yml</cite> and <cite>requirements.txt</cite>), just run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> conda-env-export --separate
+</pre></div>
+</div>
+<p>NOTE: <cite>–separate</cite> is different from <cite>–extra-pip-requirements</cite> in the output yml file,
+where the yml from <cite>–separate</cite> doesn’t explicitly list pip dependencies.
+It will use <cite>-r requirements.txt</cite> instead.</p>
+<p>[RECOMMEND]</p>
+<p>Export current activated env and output an EXTRA pip requirements file, just run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> conda-env-export --extra-pip-requirements
+</pre></div>
+</div>
+<p>WHY: Sometimes it’ll fail to install some pip deps when executing <cite>conda env create -f env.yml</cite>,
+so it’s much more convenient to install pip deps via <cite>pip install -r requirements.txt</cite> rather than
+<cite>conda env update -f env.yml –prune</cite>.</p>
+<p>Export a named env and ensure that output MUST include <cite>pip</cite> and <cite>PyYAML</cite>, run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> conda-env-export -n py37 --include pip --include pyyaml
+</pre></div>
+</div>
+<p>Export a named env and ensure that output MUST exclude <cite>pip</cite> and <cite>PyYAML</cite>, run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> conda-env-export -n py37 --exclude pip --exclude pyyaml
+</pre></div>
+</div>
+<p>Export with all conda deps and all pip deps of <cite>py37</cite></p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> conda-env-export -n py37 --conda-all --pip-all
+</pre></div>
+</div>
+<p>Export with all conda deps and all pip deps of <cite>py37</cite>, and DO NOT remove duplicates</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> conda-env-export -n py37 --conda-all --pip-all --reserve-duplicates
+</pre></div>
+</div>
+<p>Note: The operation of remove duplicates refers to remove those deps in pip, which are already in conda deps.</p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Conda Env Export</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="readme.html">Conda Env Export</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">conda_env_export</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="installation.html" title="previous chapter">Installation</a></li>
+      <li>Next: <a href="modules.html" title="next chapter">conda_env_export</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Luffy Yu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/usage.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
