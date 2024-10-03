@@ -14,7 +14,7 @@ with open('HISTORY.rst') as history_file:
 # https://github.com/luffy-yu/conda_env_export/issues/6
 # ruamel.yaml>=0.11.14,<0.18 the front comes from conda, and the rear is to fix deprecated load() function.
 requirements = ['setuptools', 'Click>=7.0', 'cytoolz>=0.11.0', 'PyYAML>=5.1', 'ruamel.yaml>=0.11.14,<0.18',
-                'conda']
+                'conda==4.3.16.2']
 
 setup_requirements = []
 
