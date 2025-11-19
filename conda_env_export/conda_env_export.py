@@ -257,7 +257,9 @@ class CondaEnvExport(object):
             matched = _check_package_by_conda_cmd(package_name)
             if not matched:
                 click.secho('Not found %s, try to install automatically...' % package_name, fg='yellow')
-                _, _ = self.call_cmd(install_cmd, install_args)
+                stdout, stderr = self.call_cmd(install_cmd, install_args)
+                print(stdout)
+                print(stderr)
                 # check again
                 matched = _check_package_by_conda_cmd(package_name)
                 assert matched, \
@@ -277,16 +279,17 @@ class CondaEnvExport(object):
 
         def check_pip_conda():
             if self.is_windows:
+                from . import __conda__, __version__
                 package_name = 'conda'
                 install_cmd = 'pip'
-                install_args = ['install', package_name, '-q']
+                install_args = ['install', __conda__, '-q']
                 _check_and_try_installing(package_name, install_cmd, install_args)
-                # For windows, the new installed conda will conflict with the default conda.
-                # It means that conda command will fail when executing.
-                # To fix this, just to remove the new installed conda locating in {prefix}/Scripts/
-                new_conda_exe_file = os.path.join(self.get_conda_prefix(name), 'Scripts/conda.exe')
-                if os.path.exists(new_conda_exe_file):
-                    os.remove(new_conda_exe_file)
+                # # For windows, the new installed conda will conflict with the default conda.
+                # # It means that conda command will fail when executing.
+                # # To fix this, just to remove the new installed conda locating in {prefix}/Scripts/
+                # new_conda_exe_file = os.path.join(self.get_conda_prefix(name), 'Scripts/conda.exe')
+                # if os.path.exists(new_conda_exe_file):
+                #     os.remove(new_conda_exe_file)
 
         _check('conda', self.get_current_conda)
         # menuinst is a package managed by conda, it's required in windows
