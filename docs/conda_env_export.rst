@@ -20,7 +20,6 @@ conda\_env\_export.conda\_env\_export module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 

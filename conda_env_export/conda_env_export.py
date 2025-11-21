@@ -134,10 +134,9 @@ class CondaEnvExport(object):
             default = None
             try:
                 m = import_module(key)
+                return getattr(m, '__version__', default)
             except:
                 return default
-            else:
-                return getattr(m, '__version__', default)
 
         # Thanks to @https://github.com/ealizadeh-via
         # Fix: https://github.com/luffy-yu/conda_env_export/issues/3

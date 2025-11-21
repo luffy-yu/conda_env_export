@@ -2,7 +2,7 @@
 
 __author__ = """Luffy Yu"""
 __email__ = 'yuliuchuan@gmail.com'
-__version__ = '0.6.1'
+__version__ = '0.6.2'
 
 # WARNING  Error during upload. Retry with the --verbose option for more details.
 # ERROR    HTTPError: 400 Bad Request from https://upload.pypi.org/legacy/
