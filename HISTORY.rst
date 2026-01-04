@@ -2,6 +2,12 @@
 History
 =======
 
+0.7.0 (2025-11-20)
+------------------
+
+* **MAJOR UPDATE**: Support Python 3.12
+* Fix `https://github.com/luffy-yu/conda_env_export/issues/13`
+
 0.6.2 (2025-11-20)
 ------------------
 
