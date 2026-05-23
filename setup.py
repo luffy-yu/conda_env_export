@@ -13,7 +13,10 @@ with open('HISTORY.rst') as history_file:
 
 # https://github.com/luffy-yu/conda_env_export/issues/6
 # ruamel.yaml>=0.11.14,<0.18 the front comes from conda, and the rear is to fix deprecated load() function.
-requirements = ['setuptools', 'Click>=7.0', 'cytoolz>=0.11.0', 'PyYAML>=5.1', 'ruamel.yaml>=0.11.14,<0.18',
+requirements = ['Click>=7.0', 'cytoolz>=0.11.0',
+                'importlib-metadata;python_version<"3.8"',
+                'packaging',
+                'PyYAML>=5.1', 'ruamel.yaml>=0.11.14,<0.18',
                 # This works for wheel installation, while dependency_links didn't.
                 # This can not be uploaded to pypi as `Can't have direct dependency`.
                 # Install them via the command, see

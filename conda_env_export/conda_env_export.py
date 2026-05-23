@@ -7,10 +7,17 @@ from itertools import chain
 from subprocess import Popen, PIPE
 
 import click
-import pkg_resources
 import yaml
 
 flatten = chain.from_iterable
+
+try:
+    from importlib import metadata as importlib_metadata
+except ImportError:
+    try:
+        import importlib_metadata
+    except ImportError:
+        importlib_metadata = None
 
 
 def _dict_representer(dumper, data):
@@ -26,6 +33,64 @@ class CustomDumper(yaml.Dumper):
 
 
 CustomDumper.add_representer(OrderedDict, _dict_representer)
+
+
+class MetadataRequirement(object):
+
+    def __init__(self, requirement):
+        self.key = requirement.name.lower()
+        self.specs = sorted((spec.operator, spec.version)
+                            for spec in requirement.specifier)
+        self.marker = requirement.marker
+
+    def applies(self):
+        if self.marker is None:
+            return True
+        return self.marker.evaluate({'extra': ''})
+
+
+class MetadataPackage(object):
+
+    def __init__(self, distribution):
+        self._distribution = distribution
+        self.project_name = distribution.metadata['Name']
+        self.key = self.project_name.lower()
+        self.version = distribution.version
+
+    def requires(self):
+        try:
+            from packaging.requirements import Requirement
+        except ImportError:
+            raise ImportError(
+                'packaging is required to parse installed requirements')
+
+        requirements = self._distribution.requires or ()
+        parsed = []
+        for requirement in requirements:
+            requirement = MetadataRequirement(Requirement(requirement))
+            if requirement.applies():
+                parsed.append(requirement)
+        return parsed
+
+
+def _iter_pip_packages(paths):
+    if importlib_metadata is not None:
+        try:
+            distributions = importlib_metadata.distributions(path=paths)
+        except TypeError:
+            distributions = importlib_metadata.distributions()
+        return [MetadataPackage(distribution)
+                for distribution in distributions]
+
+    try:
+        import pkg_resources
+    except ImportError:
+        pkg_resources = None
+
+    if pkg_resources is not None:
+        return pkg_resources.working_set
+
+    raise ImportError('importlib.metadata or pkg_resources is required')
 
 
 class Node(object):
@@ -140,7 +205,7 @@ class CondaEnvExport(object):
 
         # Thanks to @https://github.com/ealizadeh-via
         # Fix: https://github.com/luffy-yu/conda_env_export/issues/3
-        pkgs = pkg_resources.working_set
+        pkgs = _iter_pip_packages(paths)
         nodes = {}
         for pkg in pkgs:
             key = pkg.key
