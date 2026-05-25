@@ -60,6 +60,8 @@ To use Conda Env Export in a terminal:
       --include TEXT            Force to include deps (ignore case)
       --exclude TEXT            Force to exclude deps (ignore case)
       --extra-pip-requirements  Output an extra `requirements.txt`  [default: False]
+      --index-url TEXT          Add a pip `--index-url` entry to exported pip requirements
+      --extra-index-url TEXT    Add a pip `--extra-index-url` entry to exported pip requirements
       --no-prefix               Remove `prefix` in target yml file  [default: False]
       --to-folder DIRECTORY     Where to output the file(s)  [default: ./]
       --to-file FILE            Filename of the output yml file  [default: `{activated}`]
@@ -104,6 +106,18 @@ Export current activated env and output an EXTRA pip requirements file, just run
 WHY: Sometimes it'll fail to install some pip deps when executing `conda env create -f env.yml`,
 so it's much more convenient to install pip deps via `pip install -r requirements.txt` rather than
 `conda env update -f env.yml --prune`.
+
+Export current activated env with extra pip package indexes, run:
+
+.. code-block:: console
+
+    $ conda-env-export --extra-index-url https://download.pytorch.org/whl/cu128
+
+You can also provide one primary pip index:
+
+.. code-block:: console
+
+    $ conda-env-export --index-url https://download.pytorch.org/whl/cu128
 
 Export a named env and ensure that output MUST include `pip` and `PyYAML`, run:
 
