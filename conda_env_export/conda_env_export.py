@@ -63,6 +63,14 @@ class CondaEnvExport(object):
     def __init__(self):
         self.name = 'conda-env-export'
 
+    @staticmethod
+    def pip_index_options(index_url=None, extra_index_urls=()):
+        options = []
+        if index_url:
+            options.append('--index-url %s' % index_url)
+        options.extend('--extra-index-url %s' % url for url in extra_index_urls)
+        return options
+
     @property
     def is_windows(self):
         return sys.platform == 'win32'
@@ -208,7 +216,8 @@ class CondaEnvExport(object):
         nodes = sorted(nodes, key=lambda x: x.key.lower())
         return nodes
 
-    def make_yml(self, conda_nodes, pip_nodes, prefix, name, remove_duplicates=True, no_prefix=False, separate=False):
+    def make_yml(self, conda_nodes, pip_nodes, prefix, name, remove_duplicates=True, no_prefix=False, separate=False,
+                 index_url=None, extra_index_urls=()):
         if remove_duplicates:
             # remove duplicates between conda and pip
             conda_keys = set(map(lambda x: x.key, conda_nodes))
@@ -216,13 +225,14 @@ class CondaEnvExport(object):
 
         func = lambda x: [str(n) for n in x]
         conda_deps = func(conda_nodes)
-        pip_deps = func(pip_nodes)
+        pip_options = self.pip_index_options(index_url=index_url, extra_index_urls=extra_index_urls)
+        pip_deps = pip_options + func(pip_nodes)
 
         dict = OrderedDict()
         dict['name'] = name
         dict['channels'] = sorted(filter(lambda x: len(x), set(map(lambda x: x.channel, conda_nodes))))
         # https://github.com/luffy-yu/conda_env_export/issues/5
-        deps = conda_deps + [{'pip': ['-r requirements.txt'] if separate else pip_deps}]
+        deps = conda_deps + [{'pip': pip_options + ['-r requirements.txt'] if separate else pip_deps}]
         dict['dependencies'] = deps
         if not no_prefix:
             dict['prefix'] = prefix
@@ -301,7 +311,7 @@ class CondaEnvExport(object):
 
     def run(self, name=None, conda_all=False, pip_all=False, separate=False, remove_duplicates=True,
             include=(), exclude=(), extra_pip_requirements=False, no_prefix=False,
-            output_folder=None, output_file=None):
+            output_folder=None, output_file=None, index_url=None, extra_index_urls=()):
 
         click.secho('Exporting......', fg='white')
         try:
@@ -311,7 +321,8 @@ class CondaEnvExport(object):
             pip_paths = self.get_pip_paths(name, conda_prefix)
             pip_nodes = self.get_pip_deps(pip_paths, all=pip_all, include=include, exclude=exclude)
             data, pip_data = self.make_yml(conda_nodes, pip_nodes, conda_prefix, name,
-                                           remove_duplicates=remove_duplicates, no_prefix=no_prefix, separate=separate)
+                                           remove_duplicates=remove_duplicates, no_prefix=no_prefix, separate=separate,
+                                           index_url=index_url, extra_index_urls=extra_index_urls)
 
             # Fix: https://github.com/luffy-yu/conda_env_export/issues/4
             if output_file is None:
