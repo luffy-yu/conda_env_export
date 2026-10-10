@@ -98,12 +98,14 @@ class CondaEnvExport(object):
         args = ['env', 'list']
         stdout, stderr = self.call_cmd(cmd, args)
         data = stdout.decode()
-        data = list(filter(lambda x: x.startswith(name), data.split('\n')))
-        if data:
-            prefix = data[0][len(name):].strip().replace('*', '').strip()
-        else:
-            prefix = None
-        return prefix
+        for line in data.splitlines():
+            fields = line.split(None, 1)
+            if len(fields) == 2 and fields[0] == name:
+                prefix = fields[1].strip()
+                if prefix.startswith('*'):
+                    prefix = prefix[1:].strip()
+                return prefix
+        return None
 
     def get_conda_prefix(self, name=None):
         if name and name != self.get_env_name():
